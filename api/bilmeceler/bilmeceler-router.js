@@ -1,8 +1,9 @@
 // değişiklik yapmayın
-const router = require('express').Router();
-const bilmeceler = require('./bilmeceler-data');
+const router = require("express").Router();
+const bilmeceler = require("./bilmeceler-data");
+const AuthCheck = require("../middleware/restricted");
 
-router.get('/', (req, res) => {
+router.get("/", AuthCheck, (req, res) => {
   res.status(200).json(bilmeceler);
 });
 

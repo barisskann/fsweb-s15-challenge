@@ -1,8 +1,23 @@
-const router = require('express').Router();
+const router = require("express").Router();
+const usermw = require("../User/User-mw");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const User = require("../User/User-model");
+const JWT_SECRET = process.env.JWT_SECRET || "ssh";
 
-router.post('/register', (req, res) => {
-  res.end('kayıt olmayı ekleyin, lütfen!');
-  /*
+router.post(
+  "/register",
+  usermw.UsernamePasswordhaveBody,
+  usermw.checkUsernameHaveDataRegister,
+  async (req, res, next) => {
+    const { password } = req.body;
+    const hash = await bcrypt.hash(password, 8);
+    const addUser = await User.insertUser({
+      username: req.body.username,
+      password: hash,
+    });
+    return res.status(200).json(addUser);
+    /*
     EKLEYİN
     Uçnoktanın işlevselliğine yardımcı olmak için middlewarelar yazabilirsiniz.
     2^8 HASH TURUNU AŞMAYIN!
@@ -27,11 +42,25 @@ router.post('/register', (req, res) => {
     4- Kullanıcı adı alınmışsa BAŞARISIZ kayıtta,
       şu mesajı içermelidir: "username alınmış".
   */
-});
+  }
+);
 
-router.post('/login', (req, res) => {
-  res.end('girişi ekleyin, lütfen!');
-  /*
+router.post(
+  "/login",
+  usermw.UsernamePasswordhaveBody,
+  usermw.checkUsernameHaveDataLogin,
+  async (req, res) => {
+    const { password } = req.body;
+    const comparePassword = await bcrypt.compare(password, req.data.password);
+    if (comparePassword) {
+      const token = jwt.sign(req.data, JWT_SECRET, { expiresIn: "1d" });
+      return res
+        .status(200)
+        .json({ token, message: `welcome ${req.data.username}` });
+    } else {
+      return res.status({ message: "geçersiz kriterler" });
+    }
+    /*
     EKLEYİN
     Uçnoktanın işlevselliğine yardımcı olmak için middlewarelar yazabilirsiniz.
 
@@ -54,6 +83,7 @@ router.post('/login', (req, res) => {
     4- "username" db de yoksa ya da "password" yanlışsa BAŞARISIZ giriş,
       şu mesajı içermelidir: "geçersiz kriterler".
   */
-});
+  }
+);
 
 module.exports = router;
